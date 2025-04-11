@@ -4,6 +4,16 @@ import {
 } from './lexicon/types/com/atproto/sync/subscribeRepos'
 import { FirehoseSubscriptionBase, getOpsByType } from './util/subscription'
 
+function detectHardlyKnowHerJoke(text: string): boolean {
+  // Convert to lowercase for case-insensitive matching
+  const lowerText = text.toLowerCase()
+
+  // Simple pattern: word ending in "er" followed by "hardly know her" or "hardly know 'er"
+  const pattern = /\b(\w+er)\b.*?\bhardly\s+know\s+(her|'?er)\b/i
+
+  return pattern.test(lowerText)
+}
+
 export class FirehoseSubscription extends FirehoseSubscriptionBase {
   async handleEvent(evt: RepoEvent) {
     if (!isCommit(evt)) return
@@ -14,14 +24,14 @@ export class FirehoseSubscription extends FirehoseSubscriptionBase {
     // Just for fun :)
     // Delete before actually using
     for (const post of ops.posts.creates) {
-      console.log(post.record.text)
+      // console.log(post.author, post.record.text)
     }
 
     const postsToDelete = ops.posts.deletes.map((del) => del.uri)
     const postsToCreate = ops.posts.creates
       .filter((create) => {
         // only alf-related posts
-        return create.record.text.toLowerCase().includes('alf')
+        return detectHardlyKnowHerJoke(create.record.text.toLowerCase())
       })
       .map((create) => {
         // map alf-related posts to a db row
